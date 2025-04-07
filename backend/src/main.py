@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from methods.traditional.collaborative_filtering import CollaborativeRecommender
+from utils import Utils
+from fastapi.responses import JSONResponse
 
 app = FastAPI(root_path='/api')
 
@@ -42,9 +44,10 @@ def get_user_recommendations(user_id: str):
     recommender.load_data()
     top_rated_restaurant, most_similar_restaurants_ids = recommender.generate_recommendations(user_id)
     print(most_similar_restaurants_ids)
-    if not top_rated_restaurant:
+    if top_rated_restaurant is None:
         return {"error": "User does not have past reviews!"}
-    return {"answer": top_rated_restaurant}
+    top_recommended_restaurant_data = Utils.gift_wrap_restaurant_data(most_similar_restaurants_ids)
+    return JSONResponse(content=top_recommended_restaurant_data)
 
 
 @app.get("/deep-learning")
