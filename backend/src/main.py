@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from methods.traditional.collaborative_filtering import CollaborativeRecommender
 
 app = FastAPI(root_path='/api')
 
@@ -32,14 +33,18 @@ def query_mean_model(query: str):
     return {"answer": answer}
 
 @app.get("/traditional")
-def query_traditional_model(query: str):
+def get_user_recommendations(user_id: str):
     """
-    Query endpoint for the traditional model
+    Get user recommendations using collaborative filtering
     """
-    # Pass query to some function
-    answer = f"Response to the traditional query : {query}"
-    # answer = f(query) 
-    return {"answer": answer}
+    answer = f"Response to the traditional query : {user_id}"
+    recommender = CollaborativeRecommender()
+    recommender.load_data()
+    top_rated_restaurant, most_similar_restaurants_ids = recommender.generate_recommendations(user_id)
+    print(most_similar_restaurants_ids)
+    if not top_rated_restaurant:
+        return {"error": "User does not have past reviews!"}
+    return {"answer": top_rated_restaurant}
 
 
 @app.get("/deep-learning")
