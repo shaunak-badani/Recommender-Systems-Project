@@ -2,7 +2,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import os
+import shutil
+from concurrent.futures import ThreadPoolExecutor
 
+
+def move_file(src, dst):
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    shutil.move(src, dst)
 
 def condense_data():
     """
@@ -40,15 +46,18 @@ def condense_data():
     filtered_json.to_json('./data/filtered_photos.json', orient='records', lines=True)
     valid_photos = filtered_json['photo_id'].unique()
     source_folder = './raw-data/Yelp-Photos/Yelp Photos/yelp_photos/photos'
-    source_paths = [os.path.join(source_folder, photo_id) for photo_id in valid_photos if os.path.exists(os.path.join(source_folder, f"{photo_id}.jpg"))]
-    print(source_paths)
     destination_folder = './data/photos/'
     os.system(f"mkdir -p {destination_folder}")
-    if source_paths:
-        command = ['cp'] + source_paths + [destination_folder]
-        str_command = " ".join(command)
-        os.system(str_command)
-        print(f"Copied {len(source_paths)} files.")
+
+    file_pairs = []
+    for root, _, files in os.walk(source_folder):
+        for photo in valid_photos:
+            src_path = os.path.join(root, f"{photo}.jpg")
+            file_pairs.append((src_path, destination_folder))   
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+
+        executor.map(lambda pair: move_file(*pair), file_pairs)
 
 if __name__ == "__main__":
     condense_data()
