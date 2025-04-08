@@ -22,7 +22,7 @@ function App() {
         spent all day lounging on his throne. One day, his advisors came to him
         with a problem: the kingdom was running out of money (insert description)
       </p>
-      <Tabs defaultValue="mean">
+      <Tabs defaultValue="traditional">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="mean">Mean model</TabsTrigger>
           <TabsTrigger value="traditional">Traditional Model</TabsTrigger>
@@ -34,9 +34,9 @@ function App() {
           </Card>
         </TabsContent>
         <TabsContent value="traditional">
-          <Card className="p-20">
+          {/* <Card className="p-20"> */}
             <Traditional />
-          </Card>
+          {/* </Card> */}
         </TabsContent>
         <TabsContent value="deep-learning">
           <Card className="p-20">

@@ -1,39 +1,44 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useState } from "react";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
 import backendClient from "@/backendClient";
-
+import Recommendation from "@/components/recommendation";
 
 const Traditional = () => {
 
     const [isLoading, setLoading] = useState(false);
     const [query, setQuery] = useState("");
-    const [response, setResponse] = useState("");
+    const [response, setResponse] = useState([]);
+    let userId = "qVc8ODYU5SZjKXVBgXdI7w" // Hardcoded, change later
 
-    const handlePromptInput = async(query: string) => {
-        setLoading(true);
-        const response = await backendClient.get("/traditional", {
+    const getRecommendations = async() => {
+        
+        const response = await backendClient.get('/traditional', {
             params: {
-                query: query
+                user_id: userId 
             }
         });
-        setResponse(response.data.answer);
-        setLoading(false);
+        setResponse(response.data);
     }
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            await getRecommendations();
+            setLoading(false);
+        };
+
+        fetchData();
+    }, []);
 
     return (
         <>
-            <h6 className="pb-6 sm:pb-6">Traditional model</h6>
-            <p>Traditional model description here</p>
-            <Textarea
-                value={query}
-                onChange = {(e) => setQuery(e.target.value)} 
-                placeholder="Enter your query here!" />
-            <Button className="p-6 sm:p-6 rounded-2xl m-8 sm:m-8" onClick={() => handlePromptInput(query)}>
-                Send
-            </Button>
-            {response.length > 0 && <p>{response}</p>}
+            <h1 className="scroll-m-20 text-2xl font-extrabold m-8 sm:m-8 tracking-tight lg:text-3xl">
+                Top 10 recommendations for Walker
+            </h1>
+            {response.length > 0 && response.map(
+                recommendation => <Recommendation
+                    restaurant={recommendation} />
+            )}
             {isLoading && <BackdropWithSpinner />}
         </>
     )
