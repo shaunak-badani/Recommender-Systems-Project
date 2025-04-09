@@ -33,10 +33,10 @@ def get_naive_recommendations(user_id: str):
     Get user recommendations using the naive approach (top-rated in user's cities).
     Also fetches the user's name.
     """
-    # --- Load User Data ---
+
     user_name = user_id # Default to user_id if name not found
     try:
-        datapath = Path(r"C:\\Users\\saksh\\OneDrive\\Documents\\Duke Academics\\Spring 2025\\Deep Learning\\Recommendation-Systems-Project\\data") # Use raw string or escaped backslashes
+        datapath = Path("../../data")
         user_file = datapath / "yelp_academic_dataset_user.json"
         chunk_size = 10000
         user_df = None
