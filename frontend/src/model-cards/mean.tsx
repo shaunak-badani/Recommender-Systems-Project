@@ -57,11 +57,8 @@ const Mean = () => {
 
     return (
         <>
-            <h1 className="scroll-m-20 text-2xl font-extrabold mb-4 tracking-tight lg:text-3xl">
-                Top Rated By Location (Mean Model)
-            </h1>
             <p className="mb-4 text-muted-foreground">
-                Finds the highest-rated restaurants in the cities you've previously reviewed.
+                Finds the highest-rated restaurants in the cities the user has previously reviewed.
             </p>
             <div className="flex w-full max-w-lg items-center space-x-2 mb-6">
                 <Textarea
