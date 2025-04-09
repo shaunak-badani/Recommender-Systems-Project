@@ -3,38 +3,95 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
 import backendClient from "@/backendClient";
+import Recommendation from "@/components/recommendation";
+
+interface Restaurant {
+    business_id: string;
+    name: string;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    stars?: number | null;
+    review_count?: number | null;
+}
 
 
 const Mean = () => {
 
     const [isLoading, setLoading] = useState(false);
-    const [query, setQuery] = useState("");
-    const [response, setResponse] = useState("");
+    const [userId, setUserId] = useState("");
+    const [recommendations, setRecommendations] = useState<Restaurant[]>([]);
+    const [userName, setUserName] = useState<string | null>(null);
+    const [searched, setSearched] = useState(false);
 
-    const handlePromptInput = async(query: string) => {
+    const handlePromptInput = async() => {
+        if (!userId.trim()) {
+            return;
+        }
         setLoading(true);
-        const response = await backendClient.get("/mean", {
-            params: {
-                query: query
+        setSearched(true);
+        setRecommendations([]);
+        setUserName(null);
+        try {
+            const result = await backendClient.get("/mean", {
+                params: {
+                    user_id: userId
+                }
+            });
+            if (result.data && typeof result.data === 'object') {
+                setUserName(result.data.user_name || userId);
+                setRecommendations(Array.isArray(result.data.recommendations) ? result.data.recommendations : []);
+            } else {
+                setUserName(userId);
+                setRecommendations([]);
+                console.error("Unexpected API response format:", result.data);
             }
-        });
-        setResponse(response.data.answer);
-        setLoading(false);
+        } catch (error) {
+            console.error("Error fetching recommendations:", error);
+            setRecommendations([]);
+            setUserName(userId);
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
         <>
-            <h6 className="pb-6 sm:pb-6">Mean model</h6>
-            <p>Mean model description here</p>
-            <Textarea
-                value={query}
-                onChange = {(e) => setQuery(e.target.value)} 
-                placeholder="Enter your query here!" />
-            <Button className="p-6 sm:p-6 rounded-2xl m-8 sm:m-8" onClick={() => handlePromptInput(query)}>
-                Send
-            </Button>
-            {response.length > 0 && <p>{response}</p>}
-            {isLoading && <BackdropWithSpinner />}
+            <h1 className="scroll-m-20 text-2xl font-extrabold mb-4 tracking-tight lg:text-3xl">
+                Top Rated By Location (Mean Model)
+            </h1>
+            <p className="mb-4 text-muted-foreground">
+                Finds the highest-rated restaurants in the cities you've previously reviewed.
+            </p>
+            <div className="flex w-full max-w-lg items-center space-x-2 mb-6">
+                <Textarea
+                    value={userId}
+                    onChange = {(e) => setUserId(e.target.value)}
+                    placeholder="Enter your User ID" 
+                    rows={1}
+                    className="min-h-[40px]"
+                />
+                <Button className="p-4" onClick={handlePromptInput} disabled={isLoading}>
+                    {isLoading ? 'Searching...' : 'Find Restaurants'}
+                </Button>
+            </div>
+
+            {isLoading && <BackdropWithSpinner />} 
+
+            {!isLoading && searched && recommendations.length === 0 && (
+                <p>No recommendations found for this user, or the user has no reviews.</p>
+            )}
+
+            {recommendations.length > 0 && userName && (
+                <div className="mt-6">
+                    <h2 className="text-xl font-semibold mb-4">Recommendations for {userName}:</h2>
+                    <div className="space-y-4">
+                        {recommendations.map((recommendation) => (
+                            <Recommendation key={recommendation.business_id} restaurant={recommendation} />
+                        ))}
+                    </div>
+                </div>
+            )}
         </>
     )
 };
