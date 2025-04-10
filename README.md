@@ -53,6 +53,18 @@ uvicorn main:app --reload
 ```
 
 
+### Recommendation Methods
+
+#### Naive Approach (`/mean` endpoint)
+
+This method provides baseline recommendations. It works as follows:
+1.  **Identify User Locations:** Finds all the unique cities and states where the user has previously reviewed businesses using the `yelp_academic_dataset_review.json` and `yelp_academic_dataset_business.json` files.
+2.  **Find Top-Rated Businesses:** Filters the `yelp_academic_dataset_business.json` data to find businesses located in those identified cities/states.
+3.  **Rank and Filter:** Ranks these candidate businesses based on their star rating (descending) and review count (descending). It also applies a minimum review count filter (e.g., businesses must have at least 5 reviews).
+4.  **Exclude Reviewed:** Removes businesses from the list that the user has already reviewed.
+5.  **Return Top N:** Returns the IDs of the top N remaining businesses as recommendations.
+
+
 ### Deployment
 
 #### VCM
