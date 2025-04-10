@@ -4,16 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
 import backendClient from "@/backendClient";
 import Recommendation from "@/components/recommendation";
-
-interface Restaurant {
-    business_id: string;
-    name: string;
-    address?: string | null;
-    city?: string | null;
-    state?: string | null;
-    stars?: number | null;
-    review_count?: number | null;
-}
+import { Restaurant } from "@/models/restaurant";
 
 
 const Mean = () => {

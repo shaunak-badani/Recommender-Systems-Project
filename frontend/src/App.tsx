@@ -20,13 +20,13 @@ function App() {
       <p className="leading-7 [&:not(:first-child)]:mt-6 m-6 sm:m-6">
         Explore different recommendation approaches to discover restaurants based on a user's preferences and history.
       </p>
-      <Tabs defaultValue="mean">
+      <Tabs defaultValue="naive">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="mean">Mean model</TabsTrigger>
+          <TabsTrigger value="naive">Naive model</TabsTrigger>
           <TabsTrigger value="traditional">Traditional Model</TabsTrigger>
           <TabsTrigger value="deep-learning">Deep Learning Model</TabsTrigger>
         </TabsList>
-        <TabsContent value="mean">
+        <TabsContent value="naive">
           <Card className="p-20">
             <Mean />
           </Card>
