@@ -6,7 +6,6 @@ import Recommendation from "@/components/recommendation";
 const Traditional = () => {
 
     const [isLoading, setLoading] = useState(false);
-    const [query, setQuery] = useState("");
     const [response, setResponse] = useState([]);
     let userId = "qVc8ODYU5SZjKXVBgXdI7w" // Hardcoded, change later
 
