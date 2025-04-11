@@ -1,19 +1,21 @@
 import torch
 import pandas as pd
 import numpy as np
-from model_training import DeepRecommender, business_data_preprocessing, user_data_preprocessing    
+from methods.deep_learning.model_training import DeepRecommender, business_data_preprocessing, user_data_preprocessing    
 import joblib
 
 # Load data
-user_df = pd.read_json('data/yelp_academic_dataset_user.json', lines=True)
+user_df = pd.read_json('../../data/yelp_academic_dataset_user.json', lines=True)
 user_df = user_data_preprocessing(user_df)
 
-business_df = pd.read_json('data/yelp_academic_dataset_business.json', lines=True)
+business_df = pd.read_json('../../data/yelp_academic_dataset_business.json', lines=True)
 business_df = business_data_preprocessing(business_df)
 
-# Load encoders
-le_user = joblib.load('backend/models/le_user.pkl')
-le_business = joblib.load('backend/models/le_business.pkl')
+# Load encoders and scalers
+le_user = joblib.load('../models/le_user.pkl')
+le_business = joblib.load('../models/le_business.pkl')
+user_scaler = joblib.load('../models/user_scaler.pkl')
+business_scaler = joblib.load('../models/business_scaler.pkl')
 
 # Filter users to only those that were in training data
 known_users = set(le_user.classes_)
@@ -41,44 +43,130 @@ user_enc_map = get_user_enc_map()
 business_enc_map = get_business_enc_map()
 business_dec_map = get_business_dec_map()
 
+# Get business ID to category mapping for displaying more info
+def get_business_category_map():
+    return dict(zip(business_df['business_id_enc'], business_df['categories']))
+
+business_category_map = get_business_category_map()
+
 # Prepare model
-user_feat_dim = 2
-biz_feat_dim = 2
+# Read configuration to ensure we're using the right dimensions
+with open('../models/model_config.txt', 'r') as f:
+    lines = f.readlines()
+    user_feat_dim = int(lines[0].split(':')[1].strip())
+    biz_feat_dim = int(lines[1].split(':')[1].strip())
+
 model = DeepRecommender(
-    num_users=len(le_user.classes_),  # Use the number of classes from the encoder
-    num_businesses=len(le_business.classes_),  # Use the number of classes from the encoder
+    num_users=len(le_user.classes_),
+    num_businesses=len(le_business.classes_),
     user_feat_dim=user_feat_dim,
     biz_feat_dim=biz_feat_dim
 )
-model.load_state_dict(torch.load('backend/models/deep_recommender.pth'))
+model.load_state_dict(torch.load('../models/deep_recommender.pth'))
 model.eval()
 
 # Inference
-
-def recommend_for_user(user_id_str, top_k=10):
+def recommend_for_user(user_id_str, top_k=10, verbose=True):
     if user_id_str not in user_enc_map:
         raise ValueError(f"User ID '{user_id_str}' not found in training data. Cannot make recommendations for new users.")
 
     user_id = user_enc_map[user_id_str]
     user_row = user_df[user_df['user_id'] == user_id_str].iloc[0]
-    user_feat = np.array([user_row['user_review_count'], user_row['average_stars']], dtype=np.float32)
+    
+    # Extract all user features using the same columns as in training
+    user_feat = np.array([
+        user_row['user_review_count'], 
+        user_row['average_stars'],
+        user_row['yelping_years'],
+        user_row['engagement_score'],
+        user_row['is_elite']
+    ], dtype=np.float32).reshape(1, -1)
+    
+    # Apply the same scaling as during training
+    user_feat = user_scaler.transform(user_feat)[0]
 
-    candidate_biz_ids = business_df['business_id_enc'].values
-    biz_feats = business_df[['business_review_count', 'rating']].fillna(0).values.astype(np.float32)
+    # Filter to only include businesses in cities where the user has reviewed before
+    user_reviews = pd.read_json('../../data/yelp_academic_dataset_review.json', lines=True)
+    user_reviews = user_reviews[user_reviews['user_id'] == user_id_str]
+    
+    if len(user_reviews) > 0:
+        reviewed_business_ids = user_reviews['business_id'].unique()
+        reviewed_businesses = business_df[business_df['business_id'].isin(reviewed_business_ids)]
+        
+        if len(reviewed_businesses) > 0:
+            visited_cities = set(reviewed_businesses['city'])
+            candidate_businesses = business_df[business_df['city'].isin(visited_cities)]
+        else:
+            candidate_businesses = business_df
+    else:
+        # If no reviews, use all businesses
+        candidate_businesses = business_df
+    
+    # Filter out businesses the user has already reviewed
+    if len(user_reviews) > 0:
+        candidate_businesses = candidate_businesses[~candidate_businesses['business_id'].isin(reviewed_business_ids)]
+    
+    if verbose:
+        print(f"\nCreating recommendations for user with {len(user_reviews)} previous reviews")
+        print(f"Found {len(candidate_businesses)} candidate businesses")
+    
+    if len(candidate_businesses) == 0:
+        return []
+
+    candidate_biz_ids = candidate_businesses['business_id_enc'].values
+    
+    # Extract all business features using the same columns as in training
+    biz_feats = candidate_businesses[[
+        'business_review_count', 'rating'
+    ]].fillna(0).values.astype(np.float32)
+    
+    # Apply the same scaling as during training
+    biz_feats = business_scaler.transform(biz_feats)
 
     recommendations = model.recommend_for_user(
         user_id, user_feat, candidate_biz_ids, biz_feats, top_k=top_k
     )
 
-    decoded = [(business_dec_map[biz_id], score) for biz_id, score in recommendations]
-    return decoded
+    results = []
+    for biz_id, score in recommendations:
+        biz_name = business_dec_map.get(biz_id, "Unknown")
+        biz_category = business_category_map.get(biz_id, "")
+        biz_info = candidate_businesses[candidate_businesses['business_id_enc'] == biz_id].iloc[0]
+        
+        results.append({
+            'name': biz_name,
+            'rating': score,
+            'category': biz_category,
+            'city': biz_info['city'],
+            'state': biz_info['state'],
+            'actual_rating': biz_info['rating']
+        })
+
+
+    # convert to actual business ids
+    business_ids = [le_business.inverse_transform([reco[0]])[0] for reco in recommendations]
+    print(business_ids)
+    return results, business_ids
+
+def display_recommendations(recommendations):
+    if not recommendations:
+        print("No recommendations found.")
+        return
+        
+    print("\nTop Recommended Restaurants:")
+    print("=" * 80)
+    for i, rec in enumerate(recommendations, 1):
+        print(f"{i}. {rec['name']} - {rec['city']}, {rec['state']}")
+        print(f"   Predicted Rating: {rec['rating']:.2f} (Actual: {rec['actual_rating']:.1f})")
+        # Display a subset of categories for readability
+        categories = rec['category'].split(', ')[:3]
+        print(f"   Categories: {', '.join(categories)}")
+        print("-" * 80)
 
 if __name__ == '__main__':
     user_input = input("Enter user_id: ").strip()
     try:
-        recs = recommend_for_user(user_input, top_k=10)
-        print("\nTop Recommended Restaurants:")
-        for name, score in recs:
-            print(f"{name} - Predicted Rating: {score:.2f}")
+        recs, _ = recommend_for_user(user_input, top_k=10)
+        display_recommendations(recs)
     except Exception as e:
         print(f"Error: {e}")
