@@ -34,48 +34,57 @@ class CollaborativeRecommender:
         self.restaurant_embeddings = restaurant_embeddings_df
 
 
-    def generate_recommendations(self, user_id, k=10):
+    def generate_recommendations(self, user_id, k=10, n_top_items=5):
         """
-        Generates top-k recommendations for a given user.
-
+        Generates recommendations using multiple top-rated items from the user.
+        
         Args:
-            user_id (str): The ID of the user to generate recommendations for.
-            k (int): The number of recommendations to return.
-
-        Returns:
-            list: A list of top-k recommended business_ids, or an empty list if recommendations
-                  cannot be generated.
+            user_id (str): The user to generate recommendations for
+            k (int): Number of recommendations to return
+            n_top_items (int): Number of user's top items to consider
         """
         user_ratings = self.ratings[self.ratings['user_id'] == user_id]
-
+        
         if user_ratings.empty:
-            return [] # Return empty list if user has no ratings in training data
-
-        user_ratings = user_ratings.sort_values(by='stars', ascending=False)
-        top_rated_restaurant_id = user_ratings.iloc[0]['business_id']
-
-        if top_rated_restaurant_id not in self.restaurant_embeddings.index:
-            return [] # Return empty list if top item has no embedding
-
-        try:
-            # Calculate cosine similarity
-            target_embedding = self.restaurant_embeddings.loc[top_rated_restaurant_id].values
-            all_embeddings = self.restaurant_embeddings.values
-            similarities = (all_embeddings @ target_embedding[:, np.newaxis]).flatten()
-            sim_series = pd.Series(similarities, index=self.restaurant_embeddings.index)
-        except Exception as e:
-            print(f"Error calculating similarity for {top_rated_restaurant_id}: {e}")
             return []
-
-        # Exclude the top-rated item itself
-        sim_series = sim_series.drop(top_rated_restaurant_id, errors='ignore')
-
-        # Exclude items the user already rated in the training set
-        rated_in_train = user_ratings['business_id'].unique()
-        sim_series = sim_series.drop(rated_in_train, errors='ignore')
-
+        
+        # Get multiple top-rated items instead of just one
+        user_ratings = user_ratings.sort_values(by='stars', ascending=False)
+        top_rated_ids = user_ratings.head(n_top_items)['business_id'].tolist()
+        top_rated_with_embeddings = [item_id for item_id in top_rated_ids 
+                                if item_id in self.restaurant_embeddings.index]
+        
+        if not top_rated_with_embeddings:
+            return []
+        
+        # Calculate combined similarity across all top items
+        combined_sim_series = None
+        
+        for item_id in top_rated_with_embeddings:
+            try:
+                target_embedding = self.restaurant_embeddings.loc[item_id].values
+                all_embeddings = self.restaurant_embeddings.values
+                similarities = (all_embeddings @ target_embedding[:, np.newaxis]).flatten()
+                sim_series = pd.Series(similarities, index=self.restaurant_embeddings.index)
+                
+                # Combine similarities
+                if combined_sim_series is None:
+                    combined_sim_series = sim_series
+                else:
+                    combined_sim_series += sim_series
+                    
+            except Exception as e:
+                print(f"Error calculating similarity for {item_id}: {e}")
+                continue
+        
+        if combined_sim_series is None:
+            return []
+        
+        # Exclude items the user already rated
+        rated_items = user_ratings['business_id'].unique()
+        combined_sim_series = combined_sim_series.drop(rated_items, errors='ignore')
+        
         # Get top k similar items
-        recommended_ids = sim_series.nlargest(k).index.tolist()
-
+        recommended_ids = combined_sim_series.nlargest(k).index.tolist()
+        
         return recommended_ids
-

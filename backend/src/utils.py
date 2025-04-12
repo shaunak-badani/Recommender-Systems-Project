@@ -106,3 +106,24 @@ class Utils:
         # print(merged[columns_to_keep]) # Debug print
         return restaurants[columns_to_keep].to_dict(orient="records")
 
+class PopularityRecommender:
+    """
+    Simple baseline recommender that recommends the most popular items
+    (highest average rating and most reviews) that the user hasn't rated yet.
+    """
+    def __init__(self, ratings_df, min_review_count=5):
+        self.ratings = ratings_df
+        business_stats = self.ratings.groupby('business_id').agg(
+            avg_rating=('stars', 'mean'),
+            review_count=('user_id', 'count')
+        )
+        business_stats = business_stats[business_stats['review_count'] >= min_review_count]
+        self.top_businesses = business_stats.sort_values(
+            by=['avg_rating', 'review_count'], 
+            ascending=[False, False]
+        ).index.tolist()
+        
+    def generate_recommendations(self, user_id, k=10):
+        user_rated = self.ratings[self.ratings['user_id'] == user_id]['business_id'].unique()
+        recommendations = [bid for bid in self.top_businesses if bid not in user_rated][:k]
+        return recommendations
