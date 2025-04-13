@@ -64,6 +64,37 @@ This method provides baseline recommendations. It works as follows:
 4.  **Exclude Reviewed:** Removes businesses from the list that the user has already reviewed.
 5.  **Return Top N:** Returns the IDs of the top N remaining businesses as recommendations.
 
+#### Deep Learning Approach (`/deep-learning` endpoint)
+
+This method uses a neural collaborative filtering. It works as follows:
+
+1. **Data Preprocessing:**
+   - Filters businesses to only include restaurants
+   - Processes user and business features including review counts, ratings, engagement scores, and more
+   - Encodes user and business IDs using LabelEncoder
+   - Scales features using StandardScaler
+
+2. **Model Architecture:**
+   - Uses a neural network with embedding layers for users and businesses
+   - Combines embeddings with additional user and business features
+   - Implements batch normalization and dropout for better training
+   - Outputs ratings constrained to 1-5 range using sigmoid activation
+
+3. **Training Process:**
+   - Uses MSE loss and Adam optimizer
+   - Implements early stopping to prevent overfitting
+   - Saves the best model based on validation loss
+   - Stores necessary encoders and scalers for inference
+
+4. **Inference:**
+   - Filters recommendations to businesses in cities where the user has previously reviewed
+   - Excludes businesses the user has already reviewed
+   - Returns top N recommendations with predicted ratings and business details
+
+5. **Features Used:**
+   - User Features: review count, average stars, years active, engagement score, elite status
+   - Business Features: review count, rating
+
 
 ### Deployment
 
