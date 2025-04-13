@@ -8,6 +8,13 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import joblib
 import os
+import sys
+from pathlib import Path
+
+# Add the project root directory to Python path
+project_root = str(Path(__file__).parent.parent)
+sys.path.append(project_root)
+
 from scripts.data_preprocessing import user_data_preprocessing, business_data_preprocessing
 
 # Set device
