@@ -1,7 +1,7 @@
 import torch
 import pandas as pd
 import numpy as np
-from methods.deep_learning.model_training import DeepRecommender, business_data_preprocessing, user_data_preprocessing    
+from scripts.model_training import DeepRecommender, business_data_preprocessing, user_data_preprocessing    
 import joblib
 
 # Load data
