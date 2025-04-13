@@ -16,7 +16,7 @@ npm run dev
 
 - Backend
 
-Store the data in the root folder, after downloading from [here](https://duke.box.com/s/00jahivpjl2m9fl2nqnh3hhtrxzjdwhg).
+Store the data in the root folder, after downloading from [here](https://duke.box.com/s/4of0k1j2ymfirv908rczov0jtj92nop8).
 
 The application expects the following tree:
 
@@ -92,8 +92,8 @@ This method uses a neural collaborative filtering. It works as follows:
    - Returns top N recommendations with predicted ratings and business details
 
 5. **Features Used:**
-   - User Features: review count, average stars, years active, engagement score, elite status
-   - Business Features: review count, rating
+   - User Features: user_review_count, yelping_years, reviews_per_year, engagement_score, engagement_per_review, total_compliments, compliments_per_review, compliment_type_count, num_friends, friend_density, friend_to_fan_ratio, elite_years_count, is_elite, elite_score, tough_reviewer, social_compliments, thoughtful_compliments
+   - Business Features: business_review_count, rating, popularity, high_rating, curated attributes, top N categories one-hot encoded, weekly_hours, open_weekends, open_late, days_open
 
 
 ### Deployment
