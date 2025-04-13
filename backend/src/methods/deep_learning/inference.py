@@ -1,8 +1,14 @@
+import os
+import sys
 import torch
 import pandas as pd
-import numpy as np
-from scripts.model_training import DeepRecommender, business_data_preprocessing, user_data_preprocessing    
+import numpy as np  
 import joblib
+
+# Add the project root directory to Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(_file_), '../../../..'))
+sys.path.append(project_root)
+from scripts.model_training import DeepRecommender, business_data_preprocessing, user_data_preprocessing
 
 # Load data
 user_df = pd.read_json('../../data/yelp_academic_dataset_user.json', lines=True)

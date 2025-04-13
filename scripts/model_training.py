@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import joblib
 import os
-from data_preprocessing import user_data_preprocessing, business_data_preprocessing
+from scripts.data_preprocessing import user_data_preprocessing, business_data_preprocessing
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
