@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import joblib
 import os
-from data_preprocessing import user_data_preprocessing, business_data_preprocessing
+from methods.deep_learning.data_preprocessing import user_data_preprocessing, business_data_preprocessing
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -40,14 +40,10 @@ class DeepRecommender(nn.Module):
         
         # Add batch normalization layers and reduce network complexity
         self.fc = nn.Sequential(
-            nn.Linear(emb_dim * 2 + user_feat_dim + biz_feat_dim, 64),  # Smaller first layer
-            nn.BatchNorm1d(64),  # Add batch normalization
-            nn.ReLU(),
-            nn.Dropout(0.2), 
-            nn.Linear(64, 32),  
+            nn.Linear(emb_dim * 2 + user_feat_dim + biz_feat_dim, 32),
             nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Dropout(0.2), 
+            nn.Dropout(0.3),
             nn.Linear(32, 1)
         )
         

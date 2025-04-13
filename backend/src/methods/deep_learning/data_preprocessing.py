@@ -108,7 +108,7 @@ def extract_hour_features(hours_str):
     })
 
 # Preprocessing pipeline
-def business_data_preprocessing(business_df, top_n_categories=20):
+def business_data_preprocessing(business_df, top_n_categories=20, inference=False):
 
     # Filter for open restaurants
     business_df = business_df[
@@ -162,13 +162,25 @@ def business_data_preprocessing(business_df, top_n_categories=20):
     # Extract hour features
     hour_features = business_df['hours'].apply(extract_hour_features)
 
-    # Final dataframe
-    final_df = pd.concat([
-        business_df.drop(columns=[
+    if inference:
+        # Final dataframe
+        final_df = pd.concat([
+            business_df.drop(columns=[
             'attributes', 'categories', 'category_list',
-            'address', 'city', 'state', 'postal_code',
+            'address', 'postal_code',
             'latitude', 'longitude', 'hours'
         ]),
+        cat_df,
+        hour_features
+    ], axis=1)
+        
+    else:
+        final_df = pd.concat([
+            business_df.drop(columns=[
+            'attributes', 'categories', 'category_list',
+            'address', 'postal_code', 'city', 'state',
+            'latitude', 'longitude', 'hours'
+        ]), 
         cat_df,
         hour_features
     ], axis=1)
