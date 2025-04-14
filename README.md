@@ -16,7 +16,7 @@ npm run dev
 
 - Backend
 1. Store the data in the root folder, after downloading from [here](https://duke.app.box.com/s/00jahivpjl2m9fl2nqnh3hhtrxzjdwhg)
-2. Store the data in the root folder, after downloading from [here](https://duke.box.com/s/4of0k1j2ymfirv908rczov0jtj92nop8).
+2. Store the models in the root folder, after downloading from [here](https://duke.box.com/s/4of0k1j2ymfirv908rczov0jtj92nop8).
 
 The application expects the following tree:
 
@@ -53,9 +53,9 @@ uvicorn main:app --reload
 ```
 
 
-### Recommendation Methods
+## Recommendation Methods
 
-#### Naive Approach (`/mean` endpoint)
+### Naive Approach (`/mean` endpoint)
 
 This method provides baseline recommendations. It works as follows:
 1.  **Identify User Locations:** Finds all the unique cities and states where the user has previously reviewed businesses using the `yelp_academic_dataset_review.json` and `yelp_academic_dataset_business.json` files.
@@ -64,7 +64,7 @@ This method provides baseline recommendations. It works as follows:
 4.  **Exclude Reviewed:** Removes businesses from the list that the user has already reviewed.
 5.  **Return Top N:** Returns the IDs of the top N remaining businesses as recommendations.
 
-#### Deep Learning Approach (`/deep-learning` endpoint)
+### Deep Learning Approach (`/deep-learning` endpoint)
 
 This method uses a neural collaborative filtering. It works as follows:
 
@@ -95,10 +95,12 @@ This method uses a neural collaborative filtering. It works as follows:
    - User Features: user_review_count, yelping_years, reviews_per_year, engagement_score, engagement_per_review, total_compliments, compliments_per_review, compliment_type_count, num_friends, friend_density, friend_to_fan_ratio, elite_years_count, is_elite, elite_score, tough_reviewer, social_compliments, thoughtful_compliments
    - Business Features: business_review_count, rating, popularity, high_rating, curated attributes, top N categories one-hot encoded, weekly_hours, open_weekends, open_late, days_open
 
+#### Model Training (How to Run)
+```python scripts/model_training.py```
 
-### Deployment
+## Deployment
 
-#### VCM
+### VCM
 
 If you're deploying on vcm, change the vcm base url in `frontend/.env.production`. You can change the link to the url / ip address of the server you are hosting it on, if using GCP or Azure for deployment.
 
