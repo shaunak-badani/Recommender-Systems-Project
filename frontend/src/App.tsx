@@ -4,12 +4,14 @@ import { Card } from "@/components/ui/card"
 import DeepLearning from './model-cards/deeplearning'
 import Traditional from './model-cards/traditional'
 import Mean from './model-cards/mean'
+import Sidebar from './components/custom-sidebar'
 
 function App() {
 
   return (
     <>
     <div>
+      <Sidebar>
       <div className="header p-6 text-xl border-b">Restaurant Recommender</div>
     <div className="min-h-screen p-8 pb-8 sm:p-8">      
       <main className="max-w-4xl mx-auto flex flex-col gap-16">
@@ -48,6 +50,7 @@ function App() {
       </main>
 
     </div>
+    </Sidebar>
     </div>
 
       
