@@ -2,6 +2,8 @@
 
 > A template project with React & Vite as frontend and fastapi as backend.
 
+- The application is deployed and the link can be found [here](http://vcm-47417.vm.duke.edu/)
+
 
 ### How to run
 
@@ -15,7 +17,7 @@ npm run dev
 
 
 - Backend
-1. Store the data in the root folder, after downloading from [here](https://duke.app.box.com/s/00jahivpjl2m9fl2nqnh3hhtrxzjdwhg)
+1. Store the data in the root folder, after downloading from [here](https://duke.app.box.com/s/00jahivpjl2m9fl2nqnh3hhtrxzjdwhg). Unzip the photos in the zip file.
 2. Store the models in the root folder, after downloading from [here](https://duke.box.com/s/4of0k1j2ymfirv908rczov0jtj92nop8).
 
 The application expects the following tree:
@@ -25,6 +27,7 @@ The application expects the following tree:
 ├── LICENSE
 ├── README.md
 ├── backend
+│   ├── models
 ├── data
 ├── docker-compose-localhost.yml
 ├── docker-compose-vcm.yml
@@ -63,6 +66,14 @@ This method provides baseline recommendations. It works as follows:
 3.  **Rank and Filter:** Ranks these candidate businesses based on their star rating (descending) and review count (descending). It also applies a minimum review count filter (e.g., businesses must have at least 5 reviews).
 4.  **Exclude Reviewed:** Removes businesses from the list that the user has already reviewed.
 5.  **Return Top N:** Returns the IDs of the top N remaining businesses as recommendations.
+
+### Traditional Approach (`/traditional` endpoint)
+
+This method uses the collaborative filtering method. 
+1. It identifies the user and the reviews that the user has given so far.
+2. Each restaurant is embedded with one-hot on categories, i.e. If it is a coffee/tea place then the coffee/tea index in the embedding vector is set to 1. Similar to a bag-of-words approach.
+3. For each user, the cosine similarity of the restaurant embeddings is taken with the top rated restaurant of the user, and sorted in descending order.
+4. Excluding the 1st restaurant, the next 10 restaurants are considered and recommended to the user.
 
 ### Deep Learning Approach (`/deep-learning` endpoint)
 
