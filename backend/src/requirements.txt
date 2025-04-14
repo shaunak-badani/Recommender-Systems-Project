@@ -19,6 +19,5 @@ pyyaml==6.0.2
 scikit-learn==1.6.1
 tomli==2.0.1
 ujson==5.10.0
-uvloop==0.21.0
 watchfiles==1.0.4
 websockets==15.0.1

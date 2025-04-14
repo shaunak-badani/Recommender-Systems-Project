@@ -3,14 +3,15 @@ import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
 import backendClient from "@/backendClient";
 import Recommendation from "@/components/recommendation";
 
-const Traditional = () => {
+const Traditional = (props: any) => {
 
     const [isLoading, setLoading] = useState(false);
     const [response, setResponse] = useState([]);
-    let userId = "qVc8ODYU5SZjKXVBgXdI7w" // Hardcoded, change later
+    const { userId, userName } = props // Hardcoded, change later
 
     const getRecommendations = async() => {
-        
+        if(userId === null)
+            return;
         const response = await backendClient.get('/traditional', {
             params: {
                 user_id: userId 
@@ -29,10 +30,15 @@ const Traditional = () => {
         fetchData();
     }, []);
 
+    if(userId === null)
+    {
+        return(<p>Please select a persona from the left hand bar.</p>)
+    }
+
     return (
         <>
             <h1 className="scroll-m-20 text-2xl font-extrabold m-8 sm:m-8 tracking-tight lg:text-3xl">
-                Top 10 recommendations for Walker
+                Top 10 recommendations for {userName}
             </h1>
             {response.length > 0 && response.map(
                 recommendation => <Recommendation

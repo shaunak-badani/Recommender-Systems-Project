@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
@@ -7,43 +7,54 @@ import Recommendation from "@/components/recommendation";
 import { Restaurant } from "@/models/restaurant";
 
 
-const Mean = () => {
+const Mean = (props: any) => {
 
     const [isLoading, setLoading] = useState(false);
-    const [userId, setUserId] = useState("");
+    // const [userId, setUserId] = useState("");
     const [recommendations, setRecommendations] = useState<Restaurant[]>([]);
     const [userName, setUserName] = useState<string | null>(null);
     const [searched, setSearched] = useState(false);
+    const { userId } = props;
 
-    const handlePromptInput = async() => {
-        if (!userId.trim()) {
-            return;
-        }
-        setLoading(true);
-        setSearched(true);
-        setRecommendations([]);
-        setUserName(null);
-        try {
-            const result = await backendClient.get("/mean", {
-                params: {
-                    user_id: userId
-                }
-            });
-            if (result.data && typeof result.data === 'object') {
-                setUserName(result.data.user_name || userId);
-                setRecommendations(Array.isArray(result.data.recommendations) ? result.data.recommendations : []);
-            } else {
-                setUserName(userId);
-                setRecommendations([]);
-                console.error("Unexpected API response format:", result.data);
+    useEffect(() => {
+        const handleUserFetch = async() => {
+            if (userId == null) {
+                return;
             }
-        } catch (error) {
-            console.error("Error fetching recommendations:", error);
+            setLoading(true);
+            setSearched(true);
             setRecommendations([]);
-            setUserName(userId);
-        } finally {
-            setLoading(false);
+            setUserName(null);
+            try {
+                const result = await backendClient.get("/mean", {
+                    params: {
+                        user_id: userId
+                    }
+                });
+                if (result.data && typeof result.data === 'object') {
+                    setUserName(result.data.user_name || userId);
+                    setRecommendations(Array.isArray(result.data.recommendations) ? result.data.recommendations : []);
+                } else {
+                    setUserName(userId);
+                    setRecommendations([]);
+                    console.error("Unexpected API response format:", result.data);
+                }
+            } catch (error) {
+                console.error("Error fetching recommendations:", error);
+                setRecommendations([]);
+                setUserName(userId);
+            } finally {
+                setLoading(false);
+            }
         }
+        handleUserFetch();
+    }, [userId]);
+
+
+    console.log("in mean : ", userId)
+    if(userId === null)
+    {
+        return <div>please select a persona from the left hand bar.</div>
     }
 
     return (
@@ -51,18 +62,6 @@ const Mean = () => {
             <p className="mb-4 text-muted-foreground">
                 Finds the highest-rated restaurants in the cities the user has previously reviewed.
             </p>
-            <div className="flex w-full max-w-lg items-center space-x-2 mb-6">
-                <Textarea
-                    value={userId}
-                    onChange = {(e) => setUserId(e.target.value)}
-                    placeholder="Enter your User ID" 
-                    rows={1}
-                    className="min-h-[40px]"
-                />
-                <Button className="p-4" onClick={handlePromptInput} disabled={isLoading}>
-                    {isLoading ? 'Searching...' : 'Find Restaurants'}
-                </Button>
-            </div>
 
             {isLoading && <BackdropWithSpinner />} 
 

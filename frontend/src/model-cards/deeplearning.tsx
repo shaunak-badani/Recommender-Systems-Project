@@ -1,42 +1,73 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
 import backendClient from "@/backendClient";
+import Recommendation from "@/components/recommendation";
+import { Restaurant } from "@/models/restaurant";
 
-const DeepLearning = () => {
-
+const DeepLearning = (props: any) => {
     const [isLoading, setLoading] = useState(false);
-    const [query, setQuery] = useState("");
-    const [response, setResponse] = useState("");
+    const [recommendations, setRecommendations] = useState<Restaurant[]>([]);
 
-    const handlePromptInput = async(query: string) => {
+    const {userId, userName} = props;
+
+    const handlePromptInput = async() => {
+        if (userId === null) {
+            return;
+        }
+
         setLoading(true);
-        const response = await backendClient.get("/deep-learning", {
-            params: {
-                query: query
+        setRecommendations([]);
+        try {
+            const result = await backendClient.get("/deep-learning", {
+                params: {
+                    user_id: userId
+                }
+            });
+            if (result.data && typeof result.data === 'object') {
+                setRecommendations(Array.isArray(result.data.recommendations) ? result.data.recommendations : []);
+            } else {
+                setRecommendations([]);
+                console.error("Unexpected API response format:", result.data);
             }
-        });
-        setResponse(response.data.answer);
-        setLoading(false);
+        } catch (error) {
+            console.error("Error fetching recommendations:", error);
+            setRecommendations([]);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        handlePromptInput()
+    }, [userId]);
+
+    if(userId === null)
+    {
+        return <div>please select a persona from the left hand bar.</div>;
     }
 
     return (
         <>
-            <h6 className="pb-6 sm:pb-6">Deep Learning model</h6>
-            <p>Deep Learning model description here</p>
-            <Textarea
-                value={query}
-                onChange = {(e) => setQuery(e.target.value)} 
-                placeholder="Enter your query here!" />
-            <Button className="p-6 sm:p-6 rounded-2xl m-8 sm:m-8" onClick={() => handlePromptInput(query)}>
-                Send
-            </Button>
-            {response.length > 0 && <p>{response}</p>}
-            {isLoading && <BackdropWithSpinner />}
+            {isLoading && <BackdropWithSpinner />} 
+
+            {!isLoading && recommendations.length === 0 && (
+                <p>No recommendations found for this user, or the user has no reviews.</p>
+            )}
+
+            {recommendations.length > 0 && userName && (
+                <div className="mt-6">
+                    <h2 className="text-xl font-semibold mb-4">Recommendations for {userName}:</h2>
+                    <div className="space-y-4">
+                        {recommendations.map((recommendation) => (
+                            <Recommendation key={recommendation.business_id} restaurant={recommendation} />
+                        ))}
+                    </div>
+                </div>
+            )}
         </>
     )
 };
-
 
 export default DeepLearning;
