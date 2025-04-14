@@ -4,6 +4,13 @@ import ast
 from datetime import datetime
 
 def user_data_preprocessing(users_df):
+    """
+    Preprocesses the user data for the deep learning model. Creates new features from the user data.
+    Args:
+        users_df (pd.DataFrame): The user data.
+    Returns:
+        pd.DataFrame: The preprocessed user data.
+    """
     users_df = users_df.copy()
 
     # Rename columns for consistency
@@ -53,13 +60,15 @@ def user_data_preprocessing(users_df):
 
     return users_df
 
-# Fix time string formatting
 def fix_time(t):
+    """
+    Helper function to fix time string formatting.
+    """
     parts = t.split(':')
     return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
 
-# Safely parse dictionary-like strings
 def safe_parse_dict(s):
+    """Helper function to safely parse dictionary-like strings."""
     if isinstance(s, dict):
         return s
     if isinstance(s, str):
@@ -69,8 +78,8 @@ def safe_parse_dict(s):
             return {}
     return {}
 
-# Extract hour features
 def extract_hour_features(hours_str):
+    """ Helper function to extract hour features from the business data."""
     hours_dict = safe_parse_dict(hours_str)
     total_minutes = 0
     open_weekends = 0
@@ -106,10 +115,16 @@ def extract_hour_features(hours_str):
         'open_late': open_late,
         'days_open': days_open
     })
-
-# Preprocessing pipeline
+    
 def business_data_preprocessing(business_df, top_n_categories=20, inference=False):
-
+    """ Preprocessing pipeline for the business data.
+    Args:
+        business_df (pd.DataFrame): The business data.
+        top_n_categories (int): The number of top categories to consider.
+        inference (bool): Whether to perform inference.
+    Returns:
+        pd.DataFrame: The preprocessed business data.
+    """
     # Filter for open restaurants
     business_df = business_df[
         business_df['categories'].apply(lambda x: isinstance(x, str) and 'Restaurants' in x)
