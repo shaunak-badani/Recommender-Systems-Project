@@ -62,9 +62,8 @@ class Utils:
         Given a photo_id, returns a base64 image JSON. Uses fallback image if photo_id is NaN or file not found.
         """
         datapath = Path("../../data")
-        photos_dir= datapath / 'photos'
+        photos_dir = datapath / 'photos'
         fallback_image_path = datapath / "not-available.png"
-        # print("Photo Id : ", photo_id) # Debug print
         if photo_id is None or (isinstance(photo_id, float) and np.isnan(photo_id)):
             filename = fallback_image_path
             # photo_id = "fallback" 
