@@ -1,0 +1,37 @@
+...processed 72300/73198 users.
+...processed 72400/73198 users.
+...processed 72500/73198 users.
+...processed 72600/73198 users.
+...processed 72700/73198 users.
+...processed 72800/73198 users.
+...processed 72900/73198 users.
+...processed 73000/73198 users.
+...processed 73100/73198 users.
+Finished evaluating users (Popularity: 73198, Naive: 73036)
+
+--- Recommendation Evaluation Results ---
+Dataset: Full
+Train Ratings: 443683, Test Ratings: 110921
+Users w/ Relevant Test Items: 73198
+
+POPULARITY RECOMMENDER:
+Users Evaluated: 73198
+User Coverage: 100.00%
+Ranking Metrics (k=10, relevance_threshold=3.0):
+  MRR:         0.0011
+  NDCG@10:     0.0012
+  Precision@10:0.0003
+  Recall@10:   0.0021
+
+NAIVE RECOMMENDER:
+Users Evaluated: 73036
+User Coverage: 99.78%
+Ranking Metrics (k=10, relevance_threshold=3.0):
+  MRR:         0.0000
+  NDCG@10:     0.0000
+  Precision@10:0.0000
+  Recall@10:   0.0000
+
+Total evaluation time: 12279.27 seconds.
+-------------------------------------------------
+
