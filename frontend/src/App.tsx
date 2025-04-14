@@ -5,13 +5,20 @@ import DeepLearning from './model-cards/deeplearning'
 import Traditional from './model-cards/traditional'
 import Mean from './model-cards/mean'
 import Sidebar from './components/custom-sidebar'
+import { useState } from 'react'
 
 function App() {
+
+  const [userId, setUserId] = useState(null);
+  const [userName, setUserName] = useState(null);
+  console.log("User Id set : ", userId);
 
   return (
     <>
     <div>
-      <Sidebar>
+      <Sidebar
+        setUserId={setUserId}
+        setUserName={setUserName}>
       <div className="header p-6 text-xl border-b">Restaurant Recommender</div>
     <div className="min-h-screen p-8 pb-8 sm:p-8">      
       <main className="max-w-4xl mx-auto flex flex-col gap-16">
@@ -29,19 +36,19 @@ function App() {
           <TabsTrigger value="deep-learning">Deep Learning Model</TabsTrigger>
         </TabsList>
         <TabsContent value="naive">
-          <Card className="p-20">
-            <Mean />
-          </Card>
+            <Mean 
+              userId={userId}
+            />
         </TabsContent>
         <TabsContent value="traditional">
-          {/* <Card className="p-20"> */}
-            <Traditional />
-          {/* </Card> */}
+            <Traditional 
+              userId={userId}
+              userName={userName} />
         </TabsContent>
         <TabsContent value="deep-learning">
-          <Card className="p-20">
-            <DeepLearning />
-          </Card>
+            <DeepLearning 
+              userId={userId}
+              userName={userName} />
         </TabsContent>
       </Tabs>
       </div>
