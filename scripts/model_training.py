@@ -8,6 +8,14 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import joblib
 import os
+import sys
+from pathlib import Path
+
+# Add the project root directory to Python path
+project_root = str(Path(__file__).parent.parent)
+sys.path.append(project_root)
+
+from scripts.data_preprocessing import user_data_preprocessing, business_data_preprocessing
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -39,14 +47,10 @@ class DeepRecommender(nn.Module):
         
         # Add batch normalization layers and reduce network complexity
         self.fc = nn.Sequential(
-            nn.Linear(emb_dim * 2 + user_feat_dim + biz_feat_dim, 64),  # Smaller first layer
-            nn.BatchNorm1d(64),  # Add batch normalization
-            nn.ReLU(),
-            nn.Dropout(0.2), 
-            nn.Linear(64, 32),  
+            nn.Linear(emb_dim * 2 + user_feat_dim + biz_feat_dim, 32),
             nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Dropout(0.2), 
+            nn.Dropout(0.3),
             nn.Linear(32, 1)
         )
         
@@ -79,58 +83,21 @@ class DeepRecommender(nn.Module):
         top_indices = torch.topk(predictions, top_k).indices
         return [(int(business_ids[i]), float(predictions[i])) for i in top_indices]
 
-
-
-def business_data_preprocessing(business_df):
-    # only look at restaurants
-    def check_categories(categories):
-        """Return all food related categories"""
-        try:
-            return 'Restaurants' in categories.split(', ')
-        except Exception:
-            return False
-
-    business_df = business_df[business_df['categories'].apply(check_categories)]
-
-    # rename stars to rating
-    business_df.rename(columns={'stars': 'rating', 'review_count': 'business_review_count', 'name': 'business_name'}, inplace=True)
-
-    # only keep open businesses
-    business_df = business_df[business_df['is_open'] == 1]
-
-    return business_df
-
-
-def user_data_preprocessing(user_df):
-    # rename review_count to user_review_count
-    user_df.rename(columns={'review_count': 'user_review_count', 'name': 'user_name'}, inplace=True)
-    
-    # Extract years active on Yelp
-    user_df['yelping_years'] = pd.to_datetime('now') - pd.to_datetime(user_df['yelping_since'])
-    user_df['yelping_years'] = user_df['yelping_years'].dt.days / 365
-    
-    # Engagement metrics
-    user_df['engagement_score'] = (
-        user_df['useful'] + 
-        user_df['funny'] + 
-        user_df['cool'] +
-        user_df['fans']
-    ) / (user_df['yelping_years'] + 1)
-    
-    user_df['is_elite'] = user_df['elite'].apply(lambda x: 0 if x == '' else 1)
-    
-    return user_df
-
 # Data loading and training
 if __name__ == '__main__':
     print("Starting data preprocessing...")
     user_df = pd.read_json('data/yelp_academic_dataset_user.json', lines=True)
     user_df = user_data_preprocessing(user_df)
-    print("User data preprocessing complete.")
+
+    to_remove = ['user_id', 'user_name']
+    user_feats = [feat for feat in user_df.columns.tolist() if feat not in to_remove]
+    print("User data preprocessing complete. User features: ", user_feats)
 
     business_df = pd.read_json('data/yelp_academic_dataset_business.json', lines=True)
     business_df = business_data_preprocessing(business_df)
-    print("Business data preprocessing complete.")
+    to_remove = ['business_id', 'business_name']
+    business_feats = [feat for feat in business_df.columns.tolist() if feat not in to_remove]
+    print("Business data preprocessing complete. Business features: ", business_feats)
 
     review_df = pd.read_json('data/yelp_academic_dataset_review.json', lines=True)
 
@@ -151,12 +118,10 @@ if __name__ == '__main__':
     print("LabelEncoder objects saved.")
 
     # Enhanced user features
-    user_features = merged[['user_review_count', 'average_stars', 'yelping_years', 'engagement_score', 'is_elite']].fillna(0).values.astype(np.float32)
+    user_features = merged[user_feats].fillna(0).values.astype(np.float32)
     
     # Enhanced business features
-    business_features = merged[[
-        'business_review_count', 'rating'
-    ]].fillna(0).values.astype(np.float32)
+    business_features = merged[business_feats].fillna(0).values.astype(np.float32)
     
     print("user and business features extracted.")
 
@@ -190,13 +155,13 @@ if __name__ == '__main__':
     print("Train user and business ids converted to tensors and moved to device.")
 
     train_dataset = YelpDataset(train_user_ids, train_business_ids, y_train, u_train, b_train)
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)  # Increased batch size
     
     # Create validation dataset
     val_user_ids = torch.tensor([u for u, _ in X_test], dtype=torch.long).to(device)
     val_business_ids = torch.tensor([b for _, b in X_test], dtype=torch.long).to(device)
     val_dataset = YelpDataset(val_user_ids, val_business_ids, y_test, u_test, b_test)
-    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+    val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False)  # Increased batch size
     print("Train and validation datasets created and dataloaders initialized.")
 
     model = DeepRecommender(
@@ -209,8 +174,9 @@ if __name__ == '__main__':
     print("Model initialized.")
 
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    print("Criterion and optimizer initialized.")
+    optimizer = optim.Adam(model.parameters(), lr=0.0005)  # Reduced learning rate
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, verbose=True)  # Added learning rate scheduler
+    print("Criterion, optimizer, and scheduler initialized.")
 
     # Add early stopping
     best_val_loss = float('inf')
@@ -242,6 +208,9 @@ if __name__ == '__main__':
         
         val_loss = val_loss / len(val_loader)
         print(f"Epoch {epoch+1}: Train Loss = {train_loss:.4f}, Val Loss = {val_loss:.4f}")
+        
+        # Update learning rate based on validation loss
+        scheduler.step(val_loss)
         
         # Early stopping check
         if val_loss < best_val_loss:

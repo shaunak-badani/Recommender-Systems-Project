@@ -1,15 +1,21 @@
+import os
+import sys
 import torch
 import pandas as pd
-import numpy as np
-from methods.deep_learning.model_training import DeepRecommender, business_data_preprocessing, user_data_preprocessing    
+import numpy as np  
 import joblib
+
+# Add the project root directory to Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.append(project_root)
+from scripts.model_training import DeepRecommender, business_data_preprocessing, user_data_preprocessing
 
 # Load data
 user_df = pd.read_json('../../data/yelp_academic_dataset_user.json', lines=True)
 user_df = user_data_preprocessing(user_df)
 
 business_df = pd.read_json('../../data/yelp_academic_dataset_business.json', lines=True)
-business_df = business_data_preprocessing(business_df)
+business_df = business_data_preprocessing(business_df, inference=True)
 
 # Load encoders and scalers
 le_user = joblib.load('../models/le_user.pkl')
@@ -43,12 +49,6 @@ user_enc_map = get_user_enc_map()
 business_enc_map = get_business_enc_map()
 business_dec_map = get_business_dec_map()
 
-# Get business ID to category mapping for displaying more info
-def get_business_category_map():
-    return dict(zip(business_df['business_id_enc'], business_df['categories']))
-
-business_category_map = get_business_category_map()
-
 # Prepare model
 # Read configuration to ensure we're using the right dimensions
 with open('../models/model_config.txt', 'r') as f:
@@ -71,16 +71,12 @@ def recommend_for_user(user_id_str, top_k=10, verbose=True):
         raise ValueError(f"User ID '{user_id_str}' not found in training data. Cannot make recommendations for new users.")
 
     user_id = user_enc_map[user_id_str]
-    user_row = user_df[user_df['user_id'] == user_id_str].iloc[0]
+    to_remove = ['user_id', 'user_name', 'user_id_enc']
+    user_feats = [feat for feat in user_df.columns.tolist() if feat not in to_remove]
     
-    # Extract all user features using the same columns as in training
-    user_feat = np.array([
-        user_row['user_review_count'], 
-        user_row['average_stars'],
-        user_row['yelping_years'],
-        user_row['engagement_score'],
-        user_row['is_elite']
-    ], dtype=np.float32).reshape(1, -1)
+    # Get the actual user's feature values
+    user_row = user_df[user_df['user_id'] == user_id_str].iloc[0]
+    user_feat = user_row[user_feats].values.astype(np.float32).reshape(1, -1)
     
     # Apply the same scaling as during training
     user_feat = user_scaler.transform(user_feat)[0]
@@ -116,9 +112,9 @@ def recommend_for_user(user_id_str, top_k=10, verbose=True):
     candidate_biz_ids = candidate_businesses['business_id_enc'].values
     
     # Extract all business features using the same columns as in training
-    biz_feats = candidate_businesses[[
-        'business_review_count', 'rating'
-    ]].fillna(0).values.astype(np.float32)
+    to_remove = ['business_id', 'business_name', 'business_id_enc', 'city', 'state']
+    business_feats = [feat for feat in business_df.columns.tolist() if feat not in to_remove]
+    biz_feats = candidate_businesses[business_feats].fillna(0).values.astype(np.float32)
     
     # Apply the same scaling as during training
     biz_feats = business_scaler.transform(biz_feats)
@@ -130,16 +126,14 @@ def recommend_for_user(user_id_str, top_k=10, verbose=True):
     results = []
     for biz_id, score in recommendations:
         biz_name = business_dec_map.get(biz_id, "Unknown")
-        biz_category = business_category_map.get(biz_id, "")
         biz_info = candidate_businesses[candidate_businesses['business_id_enc'] == biz_id].iloc[0]
         
         results.append({
             'name': biz_name,
-            'rating': score,
-            'category': biz_category,
+            'rating_predicted_for_user': score,
             'city': biz_info['city'],
             'state': biz_info['state'],
-            'actual_rating': biz_info['rating']
+            'restaurant_rating': biz_info['rating']
         })
 
 
@@ -157,16 +151,10 @@ def display_recommendations(recommendations):
     print("=" * 80)
     for i, rec in enumerate(recommendations, 1):
         print(f"{i}. {rec['name']} - {rec['city']}, {rec['state']}")
-        print(f"   Predicted Rating: {rec['rating']:.2f} (Actual: {rec['actual_rating']:.1f})")
-        # Display a subset of categories for readability
-        categories = rec['category'].split(', ')[:3]
-        print(f"   Categories: {', '.join(categories)}")
+        print(f"   Predicted Rating: {rec['rating_predicted_for_user']:.2f} (Restaurant Rating: {rec['restaurant_rating']:.1f})")
         print("-" * 80)
 
 if __name__ == '__main__':
     user_input = input("Enter user_id: ").strip()
-    try:
-        recs, _ = recommend_for_user(user_input, top_k=10)
-        display_recommendations(recs)
-    except Exception as e:
-        print(f"Error: {e}")
+    recs, _ = recommend_for_user(user_input, top_k=10)
+    display_recommendations(recs)
