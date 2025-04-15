@@ -5,11 +5,12 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Copy requirements.txt to the container
-COPY src/requirements.txt .
+COPY backend/src/requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY backend/ .
+COPY scripts /scripts/
 
 EXPOSE 8000
 
