@@ -150,3 +150,33 @@ The following table summarizes the performance of different recommendation model
 **Notes:**
 *   Item-Item CF used a higher relevance threshold (4.0) compared to the others (3.0).
 *   All metrics calculated with k=10.
+
+
+# Ethics Statement and Previous Work
+
+## Ethics Statement
+
+Our restaurant recommendation system raises several ethical considerations:
+
+- **Privacy**: We use anonymized Yelp review data, but recognize that even anonymized data can sometimes be de-anonymized through pattern analysis.
+- **Bias**: Restaurant recommendations may reflect existing biases in review patterns, potentially disadvantaging smaller establishments or those from underrepresented communities.
+- **Diversity**: Pure popularity-based recommendations risk creating "rich get richer" scenarios where already-popular restaurants receive disproportionate attention.
+- **Transparency**: Our evaluation metrics provide transparency about system performance, but end-users deserve clear understanding of recommendation criteria.
+
+## Previous Work
+
+Restaurant recommendation systems have evolved through several approaches:
+
+- **Collaborative Filtering**: Traditional methods use user-item matrices to find similar users (user-based) or restaurants (item-based) to generate recommendations.
+- **Content-based Filtering**: These systems analyze restaurant attributes (cuisine, price, location) and user preferences to make personalized suggestions.
+- **Hybrid Approaches**: Many successful systems combine collaborative and content-based methods, as seen in work by Jannach et al. [1] on context-aware restaurant recommendation.
+- **Deep Learning**: Recent advances use neural networks to capture complex patterns in user-restaurant interactions. Zhang et al. [2] demonstrated superior performance using neural collaborative filtering for personalized recommendation tasks.
+- **Location-Aware Systems**: Given the importance of location in restaurant choice, many approaches incorporate geographical constraints, as shown by Bao et al. [3] in their work on location-based recommendation systems.
+
+Our approach builds on these foundations by implementing both traditional (item-item collaborative filtering) and deep learning methods with careful evaluation.
+
+## References
+[1] Jannach, D., Zanker, M., & Fuchs, M. (2014). Leveraging multi-criteria customer feedback for satisfaction analysis and improved recommendations. Information Technology & Tourism, 14(2), 119-149.
+[2] Zhang, S., Yao, L., Sun, A., & Tay, Y. (2019). Deep learning based recommender system: A survey and new perspectives. ACM Computing Surveys, 52(1), 1-38.
+[3] Bao, J., Zheng, Y., & Mokbel, M. F. (2015). Location-based and preference-aware recommendation using sparse geo-social networking data. Proceedings of the 20th International Conference on Advances in Geographic Information Systems, 199-208.
+
