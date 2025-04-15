@@ -110,11 +110,11 @@ if __name__ == '__main__':
     merged['business_id_enc'] = le_business.fit_transform(merged['business_id'])
     print("Label encoding complete.")
 
-    os.makedirs('backend/models', exist_ok=True)
+    os.makedirs('models', exist_ok=True)
 
     # Save the LabelEncoder objects
-    joblib.dump(le_user, 'backend/models/le_user.pkl')
-    joblib.dump(le_business, 'backend/models/le_business.pkl')
+    joblib.dump(le_user, 'models/le_user.pkl')
+    joblib.dump(le_business, 'models/le_business.pkl')
     print("LabelEncoder objects saved.")
 
     # Enhanced user features
@@ -133,8 +133,8 @@ if __name__ == '__main__':
     business_features = business_scaler.fit_transform(business_features)
     
     # Save the scalers for inference
-    joblib.dump(user_scaler, 'backend/models/user_scaler.pkl')
-    joblib.dump(business_scaler, 'backend/models/business_scaler.pkl')
+    joblib.dump(user_scaler, 'models/user_scaler.pkl')
+    joblib.dump(business_scaler, 'models/business_scaler.pkl')
     print("User and business features scaled and scalers saved.")
 
     X_user_ids = torch.tensor(merged['user_id_enc'].values, dtype=torch.long).to(device)
@@ -217,7 +217,7 @@ if __name__ == '__main__':
             best_val_loss = val_loss
             patience_counter = 0
             # Save the best model
-            torch.save(model.state_dict(), 'backend/models/deep_recommender.pth')
+            torch.save(model.state_dict(), 'models/deep_recommender.pth')
             print(f"Model saved at epoch {epoch+1}")
         else:
             patience_counter += 1
@@ -228,6 +228,10 @@ if __name__ == '__main__':
     print("Training complete!")
     
     # Save model architecture details for reference
-    with open('backend/models/model_config.txt', 'w') as f:
+    with open('models/model_config.txt', 'w') as f:
         f.write(f"User features: {user_features.shape[1]}\n")
         f.write(f"Business features: {business_features.shape[1]}\n")
+
+    # Save the best model state
+    torch.save(model.state_dict(), 'models/deep_recommender.pth')
+    print("Training complete. Model and preprocessing objects saved.")
