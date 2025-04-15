@@ -28,7 +28,7 @@ const Traditional = (props: any) => {
         };
 
         fetchData();
-    }, []);
+    }, [userId]);
 
     if(userId === null)
     {
