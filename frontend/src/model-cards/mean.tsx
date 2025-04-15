@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import BackdropWithSpinner from "@/components/ui/backdropwithspinner";
 import backendClient from "@/backendClient";
 import Recommendation from "@/components/recommendation";
@@ -10,7 +8,6 @@ import { Restaurant } from "@/models/restaurant";
 const Mean = (props: any) => {
 
     const [isLoading, setLoading] = useState(false);
-    // const [userId, setUserId] = useState("");
     const [recommendations, setRecommendations] = useState<Restaurant[]>([]);
     const [userName, setUserName] = useState<string | null>(null);
     const [searched, setSearched] = useState(false);

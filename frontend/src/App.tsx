@@ -1,6 +1,5 @@
 import './App.css'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card } from "@/components/ui/card"
 import DeepLearning from './model-cards/deeplearning'
 import Traditional from './model-cards/traditional'
 import Mean from './model-cards/mean'
