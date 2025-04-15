@@ -121,3 +121,32 @@ Commands to deploy:
 cd TemplateProject # You can rename this, just make sure the current directory has the docker compose file
 sudo docker compose -f docker-compose.yml up --build -d
 ```
+
+## Evaluation Results
+
+### How to Run Evaluations
+
+Make sure you have the necessary data (`/data` directory) and models (`/models` directory) downloaded and placed in the project root directory as described in the setup instructions.
+
+Navigate to the `backend/src` directory in your terminal.
+
+Then, run the desired evaluation script:
+
+*   **Deep Learning:** `python evaluate_dl.py`
+*   **Item-Item CF:** `python evaluate_item_cf.py`
+*   **Naive & Popularity:** `python evaluate_naive.py`
+
+Evaluation results will be printed to the console and may also be saved to `.txt` files in the `backend/src` directory.
+
+The following table summarizes the performance of different recommendation models evaluated using the scripts in `backend/src/`.
+
+| Model                   | Relevance Threshold | MRR    | NDCG@10 | Precision@10 | Recall@10 | User Coverage | Eval Time (s) | Source Script         |
+| :---------------------- | :------------------ | :----- | :------ | :----------- | :-------- | :------------ | :------------ | :-------------------- |
+| Popularity (Baseline)   | 3.0                 | 0.0011 | 0.0012  | 0.0003       | 0.0021    | 100.00%       | ~12279*       | `evaluate_naive.py`   |
+| Naive                   | 3.0                 | 0.0000 | 0.0000  | 0.0000       | 0.0000    | 99.78%        | ~12279*       | `evaluate_naive.py`   |
+| Item-Item CF            | 4.0                 | 0.0009 | 0.0009  | 0.0002       | 0.0016    | 54.31%        | ~5242         | `evaluate_item_cf.py` |
+| Deep Learning           | 3.0                 | 0.0003 | 0.0003  | 0.0001       | 0.0006    | 100.00%       | ~1755         | `evaluate_dl.py`      |
+
+**Notes:**
+*   Item-Item CF used a higher relevance threshold (4.0) compared to the others (3.0).
+*   All metrics calculated with k=10.
