@@ -1,6 +1,6 @@
-# Template project
+# Restaurant recommendation system
 
-> A template project with React & Vite as frontend and fastapi as backend.
+> A web application that recommends restaurants based on various user data.
 
 - The application is deployed and the link can be found [here](http://vcm-47417.vm.duke.edu/)
 
