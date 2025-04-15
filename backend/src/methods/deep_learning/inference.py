@@ -22,10 +22,10 @@ business_df = pd.read_json('../../data/yelp_academic_dataset_business.json', lin
 business_df = business_data_preprocessing(business_df, inference=True)
 
 # Load label encoders and scalers
-le_user = joblib.load("../../models/le_user.pkl")
-le_business = joblib.load('../../models/le_business.pkl')
-user_scaler = joblib.load('../../models/user_scaler.pkl')
-business_scaler = joblib.load('../../models/business_scaler.pkl')
+le_user = joblib.load("../models/le_user.pkl")
+le_business = joblib.load('../models/le_business.pkl')
+user_scaler = joblib.load('../models/user_scaler.pkl')
+business_scaler = joblib.load('../models/business_scaler.pkl')
 
 # Filter users to only those that were in training data
 known_users = set(le_user.classes_)
@@ -54,22 +54,22 @@ business_enc_map = get_business_enc_map()
 business_dec_map = get_business_dec_map()
 
 
-model_config = {}
-with open('../../models/model_config.txt', 'r') as f:
-    for line in f:
-        key, value = line.strip().split(': ')
-        model_config[key] = int(value)
+# Prepare model
+# Read configuration to ensure we're using the right dimensions
+with open('../models/model_config.txt', 'r') as f:
+    lines = f.readlines()
+    user_feat_dim = int(lines[0].split(':')[1].strip())
+    biz_feat_dim = int(lines[1].split(':')[1].strip())
+
 
 model = DeepRecommender(
     num_users=len(le_user.classes_),
     num_businesses=len(le_business.classes_),
-    embedding_dim=128, 
-    num_user_features=model_config['User features'],
-    num_business_features=model_config['Business features'],
-    hidden_dim=128
+    user_feat_dim = user_feat_dim,
+    biz_feat_dim=biz_feat_dim
 )
 
-model.load_state_dict(torch.load('../../models/deep_recommender.pth', map_location=device))
+model.load_state_dict(torch.load('../models/deep_recommender.pth', map_location=device))
 model.to(device)
 model.eval()
 

@@ -66,12 +66,12 @@ class Utils:
         fallback_image_path = datapath / "not-available.png"
         if photo_id is None or (isinstance(photo_id, float) and np.isnan(photo_id)):
             filename = fallback_image_path
-            # photo_id = "fallback" 
+            photo_id = "fallback" 
         else:
             filename = os.path.join(photos_dir, f"{photo_id}.jpg")
             if not os.path.exists(filename):
                 filename = fallback_image_path
-                # photo_id = "fallback"
+                photo_id = "fallback"
 
         with open(filename, "rb") as f:
             image_data = f.read()
@@ -95,15 +95,14 @@ class Utils:
             return [] # Return empty list on error
 
         restaurants = restaurants[restaurants['business_id'].isin(restaurant_ids)]
-
-
-        # Temporarily use fallback image for all until photo logic is confirmed/needed
-        restaurants['image'] = (fallback_image_path := datapath / "not-available.png").read_bytes()
-        restaurants['image'] = restaurants['image'].apply(lambda x: base64.b64encode(x).decode("utf-8"))
-
+        photos_json_path = datapath / 'filtered_photos.json'
+        photos_json = pd.read_json(photos_json_path, lines=True)
+        photos_json = photos_json[photos_json['business_id'].isin(restaurant_ids)]\
+                            .drop_duplicates(subset='business_id')
+        merged = restaurants.merge(photos_json, on='business_id', how='left')
+        merged['image'] = merged['photo_id'].map(Utils.photo_id_to_image_json)
         columns_to_keep = ['business_id', 'name', 'address', 'image']
-        # print(merged[columns_to_keep]) # Debug print
-        return restaurants[columns_to_keep].to_dict(orient="records")
+        return merged[columns_to_keep].to_dict(orient="records")
 
 class PopularityRecommender:
     """
